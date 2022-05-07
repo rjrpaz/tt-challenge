@@ -228,9 +228,45 @@ Being part of an autoscaling group means that if there is a server failure, the 
 
 Also services are provided through a load balancer. A LB works tighly with the autoscale group. When an instance goes down, the load balancer redirects the traffic to the healthy instances so there should be no downtime in the service.
 
+## CI/CD pipeline
+
+I'm going to use Gitlab CI/CD for the pipeline. Gitlab requires the installation of *gitlab runner* in the working development station.
+
+I'm using an Ubuntu-based station. Check [here](https://docs.gitlab.com/runner/install/linux-manually.html) to learn more about how to install gitlab-runner.
+
+Gitlab-runner also requires a running version of docker.
+
+Once gitlab runner is installed in the server, it will run as a local service. Then we need to register this service to the remote repository. Check *Settings* -> *CI/CD* -> *Runners* to learn about how to register this service.
+
+The file that defined the pipeline is part of the project: [https://git.toptal.com/rjrpaz/node-3tier-app2/-/blob/master/.gitlab-ci.yml](https://git.toptal.com/rjrpaz/node-3tier-app2/-/blob/master/.gitlab-ci.yml)
+
+I defined three main stages for the pipeline:
+
+- build: it will build the application
+- test: it will run tests (if any - TBD)
+- deploy: it will deploy the services
+
+The last stage is only applied on the master branch.
+
+Regarding the fact that the infrastructure where this application is running install the application from scratch (downloading the code from the gitlab repository), then the new deployement can be achivieved just by renewing the autoscaling group with new fresh instances. The deploy stage run a command to do this renewal then.
+
+To able to run aws command in the CI/CD we should use a predefined image that includes the aws command. It also requires to configure some environment variables in the pipeline that allows aws command to run with no errorr (aws credencials, p.e.)
+
+![Pipeline environment variables](./img/Gitlab-aws-variables.png)
+
+This approach is mostly used when we deal with a kubernetes-based infrastrcture instead of using instances, so it can be improved a lot. Being the first time that I use gitlab CI/CD, I preferred to be conservative. An artifact approach to be downloaded by an agent in the EC2 instance may be an improvement in this case. For this, an s3 bucket can be used to store the artifacts.
+
+Once the project is modified and merge to master, the pipeline runs all steps:
+
+![pipeline steps](./img/pipeline-steps.png)
+
+After the instance group renewal, we can see the new version of the app:
+
+![app v.2](./img/app-v2.png)
+
 <!-- The requirements for the test project are:
 
-- The deployment of new code should be completely automated (bonus points if you create tests and include them into the pipeline).
+- ADD TESTS TO THE PIPELINE
 
 - The database and any mutable storage need to be backed up at least daily.
 
@@ -242,8 +278,6 @@ Also services are provided through a load balancer. A LB works tighly with the a
 
 As a solution, please commit to the Toptal git repo the following:
 
-- An architectural diagram / PPT to explain your architecture during the interview (add CI/CD infra).
-
 - All the relevant configuration scripts (Terraform/Ansible/Cloud Formation/ARM Templates)
 
 - All the relevant runtime handling scripts (start/stop/scale nodes).
@@ -252,7 +286,7 @@ As a solution, please commit to the Toptal git repo the following:
 
 - You can use another git provider to leverage hooks, CI/CD or other features not enabled in Toptal’s git. Everything else, including the code for the CI/CD pipeline, must be pushed to Toptal’s git. -->
 
-## Enhancements
+## Improvements
 
 The pipeline should be able to identify if the modifications for the project impact frontend or backend only and proceed to do the update to the specific autoscaling group.
 
@@ -261,3 +295,7 @@ Add a testing stage for the infrastructure management itseft through *terramake*
 Add redudancy to the database. Both subnets are already created. A master is created in the first subnet but the replica is missing in the second subnet. Also, an internal load balancer should be added as an endpoint for both databases (?).
 
 Add proper DNS entries for both services.
+
+Renew the application instead of the server when a new release is merged in master.
+
+Create an artifact to be downloaded when a new Instance is created, instead of using the git clone approach.
