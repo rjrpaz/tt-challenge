@@ -1,0 +1,7 @@
+create_bastion   = true
+access_ip        = "0.0.0.0/0"
+dbname           = "devops"
+dbuser           = "dbuser"
+dbpassword       = "<put_pass_here>"
+gitlab_token     = "<put_gitlab_token_here>"
+private_key_path = "/home/myuser/.ssh/id_rsa"

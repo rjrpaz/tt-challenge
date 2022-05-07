@@ -1,0 +1,44 @@
+#!/bin/bash
+
+GITLAB_TOKEN='<replace_gitlab_token>'
+
+# Install npm
+sudo apt -y update
+sudo apt -y install npm
+
+# Clone project
+cd /home/ubuntu
+git clone https://rjrpaz:${GITLAB_TOKEN}@git.toptal.com/rjrpaz/node-3tier-app2.git node-3tier-app2
+
+# Install node required dependencies
+cd /home/ubuntu/node-3tier-app2/api
+
+npm install
+
+# Configure app as a service for the OS
+sudo tee -a /etc/systemd/system/nodeapp.service > /dev/null <<EOT
+[Unit]
+Description=nodeapp service
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/node-3tier-app2/api
+Environment=PORT=8081
+Environment=DB=<dbname>
+Environment=DBUSER=<dbuser>
+Environment=DBPASS=<dbpass>
+Environment=DBHOST=<dbhost>
+Environment=DBPORT=5432
+ExecStart=npm start
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+EOT
+
+sudo systemctl daemon-reload
+
+# Enable and start the app
+sudo systemctl enable --now nodeapp.service
+
