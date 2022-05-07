@@ -1,0 +1,23 @@
+variable "instance_type" {}
+variable "public_sg_front" {}
+variable "private_sg_front" {}
+variable "private_subnets_front" {}
+variable "public_subnets_front" {}
+variable "public_sg_back" {}
+variable "private_sg_back" {}
+variable "private_subnets_back" {}
+variable "key_name" {}
+variable "public_key_path" {}
+variable "private_key_path" {}
+variable "gitlab_token" {}
+variable "dbhost" {}
+variable "dbport" {}
+variable "dbuser" {}
+variable "dbpass" {}
+variable "dbname" {}
+variable "apiendpoint" {}
+variable "lb_target_group_front_arn" {}
+variable "lb_target_group_back_arn" {}
+variable "tg_port" {}
+variable "create_bastion" {}
+

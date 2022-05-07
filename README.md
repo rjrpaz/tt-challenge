@@ -46,7 +46,28 @@ As a solution, please commit to the Toptal git repo the following:
 
 - You can use another git provider to leverage hooks, CI/CD or other features not enabled in Toptal’s git. Everything else, including the code for the CI/CD pipeline, must be pushed to Toptal’s git.
 
-## Infrastructure for the app
+## Infrastructure design
+
+![Infrastructure](./img/3%20tier.drawio.png)
+
+This architecture includes:
+
+- A single VPC with an Internet Gateway.
+- 2 availability zones are used (minimun value required for ALB).
+- 2 ALB deployed across 2 AZs in the public subnets.
+  - One for the frontend EC2 ASG
+  - One for the backend EC2 ASG.
+- Each EC2 ASG spans across 2 AZs.
+- frontend talks to backend via this ALB.
+- Data tier is stored using RDS (postgres). RDS uses multi AZ setup so we have a standby instance in the second AZ.
+- Each Tier is secured by a security group that restricts traffic to the tier above.
+  - The data tier’s security group only allows inbound traffic from the backend tier’s security group.
+  - The backend tier’s security group allows inbound from its ALB.
+  - The backend ALB’s security group allows outbound only to the backend tier’s security group and allows inbound from anywhere but only on specific ports (80 and 8081)
+  - The frontend tier’s security group allows outbound only to the backend ALB’s security group and allows inbound only from the frontend ALB.
+  - The frontend ALB allows inbound from anywhere but only on specific ports (80 and 8080).
+
+## Building the infrastructure for the app
 
 I'm going to use *AWS* as cloud provider. AWS region to be used is *us-east-1*.
 
@@ -118,6 +139,31 @@ terraform {
 }
 ```
 
+Create file *terraform.tfvars* and configure sensitive names required by terraform. You can use terraform.tfvars.sample as an example:
+
+```console
+$ cat terraform.tfvars.sample
+
+create_bastion   = true
+access_ip        = "0.0.0.0/0"
+dbname           = "devops"
+dbuser           = "dbuser"
+dbpassword       = "<put_pass_here>"
+gitlab_token     = "<put_gitlab_token_here>"
+private_key_path = "/home/myuser/.ssh/id_rsa"
+
+```
+
+- *create_bastion*: boolean, indicates if a bastion host should be created (this is mainly required for debug purposes).
+- *access_ip*: CIDR of the management network. If you want to restrict access to the service, change this value.
+- *dbname*: name of the postgres database.
+- *dbuser*: database user.
+- *dbpassword*: database user password.
+- *gitlab_token*: token to authenticate to gitlab repository.
+- *private_key_path*: private SSH key to access login to the instances (this is mainly required for debug purposes).
+
+Some other non-sensitive variables are defined in file *variables.tf* (AWS region, p.e.). Take a look to the file and do any required modification.
+
 Initialize terraform:
 
 ```bash
@@ -130,22 +176,59 @@ Check modifications to be done before apply them:
 terraform plan
 ```
 
+Create the infrastructer:
 
+```bash
+terraform apply
+```
 
+This will take a few minutes. Command output should be showing something like this:
+
+```console
+
+   ...
+
+backend_endpoint = "tt-loadbalancer-back-1560565900.us-east-1.elb.amazonaws.com"
+frontend_endpoint = "tt-loadbalancer-front-1992000051.us-east-1.elb.amazonaws.com"
+rds_endpoint = "tt-db.cmjc5qdthd3j.us-east-1.rds.amazonaws.com:5432"
+```
+
+### Testing infrastructure
+
+Both web and API tiers are exposed to the internet. DB tier however is not.
+
+The EC2 instances take a few more minutes to start the server and the application.
+
+Open a browser and point to the frontend_endpoint url (this will differ each time):
+
+```http://tt-loadbalancer-front-1992000051.us-east-1.elb.amazonaws.com```
+
+You can also access to the API url. Point to the following url:
+
+```http://tt-loadbalancer-back-1560565900.us-east-1.elb.amazonaws.com/api/status```
+
+### Description of the code
+
+Terraform includes 4 modules to create main resource types:
+
+- networking
+- database
+- loadbalancing
+- compute
+
+As usual in terraform, *main.tf* call the modules and creates the resources.
+
+Terraform creates all required resources except for the S3 bucket used to store terraform state, which was created using the *s3 cli* tool.
+
+### High availability and redundancy
+
+EC2 instances are created as part of an Autoscaling group. Terraform creates the autoscaling group, not the instances directly. This means that terraform has no knowledge about the created EC2 instances, being this managed by the autoscaling group and the cloud provider.
+
+Being part of an autoscaling group means that if there is a server failure, the autoscale group is going to replace it with a new healthy instances. It also means that number of instances can scale up and down.
+
+Also services are provided through a load balancer. A LB works tighly with the autoscale group. When an instance goes down, the load balancer redirects the traffic to the healthy instances so there should be no downtime in the service.
 
 <!-- The requirements for the test project are:
-
-- Both web and API tiers should be exposed to the internet and DB tier should not be accessible from the internet.
-
-- You should clone the repository and use it as the base for your system.
-
-- You need to create resources for all the tiers.
-
-- The architecture should be completely provisioned via some infrastructure as a code tool.
-
-- Presented solution must handle server (instance) failures.
-
-- Components must be updated without downtime in service.
 
 - The deployment of new code should be completely automated (bonus points if you create tests and include them into the pipeline).
 
@@ -153,17 +236,13 @@ terraform plan
 
 - All relevant logs for all tiers need to be easily accessible (having them on the hosts is not an option).
 
-- You should clone the repository and use it as the base for your system.
-
-- You should be able to deploy it on one larger Cloud provider: AWS / Google Cloud / Azure / DigitalOcean / RackSpace.
-
 - The system should present relevant historical metrics to spot and debug bottlenecks.
 
 - The system should implement CDN to allow content distribution based on client location
 
 As a solution, please commit to the Toptal git repo the following:
 
-- An architectural diagram / PPT to explain your architecture during the interview.
+- An architectural diagram / PPT to explain your architecture during the interview (add CI/CD infra).
 
 - All the relevant configuration scripts (Terraform/Ansible/Cloud Formation/ARM Templates)
 
@@ -172,3 +251,13 @@ As a solution, please commit to the Toptal git repo the following:
 - All the relevant backup scripts.
 
 - You can use another git provider to leverage hooks, CI/CD or other features not enabled in Toptal’s git. Everything else, including the code for the CI/CD pipeline, must be pushed to Toptal’s git. -->
+
+## Enhancements
+
+The pipeline should be able to identify if the modifications for the project impact frontend or backend only and proceed to do the update to the specific autoscaling group.
+
+Add a testing stage for the infrastructure management itseft through *terramake*.
+
+Add redudancy to the database. Both subnets are already created. A master is created in the first subnet but the replica is missing in the second subnet. Also, an internal load balancer should be added as an endpoint for both databases (?).
+
+Add proper DNS entries for both services.
