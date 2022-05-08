@@ -39,7 +39,7 @@ As a solution, please commit to the Toptal git repo the following:
 - An architectural diagram / PPT to explain your architecture during the interview.
 
 - All the relevant configuration scripts (Terraform/Ansible/Cloud Formation/ARM Templates)
-
+s
 - All the relevant runtime handling scripts (start/stop/scale nodes).
 
 - All the relevant backup scripts.
@@ -53,7 +53,7 @@ As a solution, please commit to the Toptal git repo the following:
 This architecture includes:
 
 - A single VPC with an Internet Gateway.
-- 2 availability zones are used (minimun value required for ALB).
+- 2 availability zones are used (minimum value required for ALB).
 - 2 ALB deployed across 2 AZs in the public subnets.
   - One for the frontend EC2 ASG
   - One for the backend EC2 ASG.
@@ -176,7 +176,7 @@ Check modifications to be done before apply them:
 terraform plan
 ```
 
-Create the infrastructer:
+Create the infrastructure:
 
 ```bash
 terraform apply
@@ -226,7 +226,7 @@ EC2 instances are created as part of an Autoscaling group. Terraform creates the
 
 Being part of an autoscaling group means that if there is a server failure, the autoscale group is going to replace it with a new healthy instances. It also means that number of instances can scale up and down.
 
-Also services are provided through a load balancer. A LB works tighly with the autoscale group. When an instance goes down, the load balancer redirects the traffic to the healthy instances so there should be no downtime in the service.
+Also services are provided through a load balancer. A LB works tightly with the autoscale group. When an instance goes down, the load balancer redirects the traffic to the healthy instances so there should be no downtime in the service.
 
 ## CI/CD pipeline
 
@@ -248,13 +248,13 @@ I defined three main stages for the pipeline:
 
 The last stage is only applied on the master branch.
 
-Regarding the fact that the infrastructure where this application is running install the application from scratch (downloading the code from the gitlab repository), then the new deployement can be achivieved just by renewing the autoscaling group with new fresh instances. The deploy stage run a command to do this renewal then.
+Regarding the fact that the infrastructure where this application is running install the application from scratch (downloading the code from the gitlab repository), then the new deployment can be achieved just by renewing the autoscaling group with new fresh instances. The deploy stage run a command to do this renewal then.
 
-To able to run aws command in the CI/CD we should use a predefined image that includes the aws command. It also requires to configure some environment variables in the pipeline that allows aws command to run with no errorr (aws credencials, p.e.)
+To able to run aws command in the CI/CD we should use a predefined image that includes the aws command. It also requires to configure some environment variables in the pipeline that allows aws command to run with no errors (aws credentials, p.e.)
 
 ![Pipeline environment variables](./img/Gitlab-aws-variables.png)
 
-This approach is mostly used when we deal with a kubernetes-based infrastrcture instead of using instances, so it can be improved a lot. Being the first time that I use gitlab CI/CD, I preferred to be conservative. An artifact approach to be downloaded by an agent in the EC2 instance may be an improvement in this case. For this, an s3 bucket can be used to store the artifacts.
+This approach is mostly used when we deal with a kubernetes-based infrastructure instead of using instances, so it can be improved a lot. Being the first time that I use gitlab CI/CD, I preferred to be conservative. An artifact approach to be downloaded by an agent in the EC2 instance may be an improvement in this case. For this, an s3 bucket can be used to store the artifacts.
 
 Once the project is modified and merge to master, the pipeline runs all steps:
 
@@ -264,13 +264,23 @@ After the instance group renewal, we can see the new version of the app:
 
 ![app v.2](./img/app-v2.png)
 
+## Storing logs remotely
+
+I used *CloudWatch* service from AWS to store logs in a centralized way.
+
+For this I create a new module in the terraform code. This module creates all required IAM resources (roles, policies and profiles) to allow EC2 instances to store the logs remotely.
+
+I also modified the compute module to apply this new profile to the instances in the auto scaling group. I added some commands to the initialization script to install the agent and provide a minimal configuration to send application related logs to cloudwatch.
+
+![Cloud Watch](./img/CloudWatch.png)
+
+It also worth to mention that this agent also provides resource monitoring level.
+
 <!-- The requirements for the test project are:
 
 - ADD TESTS TO THE PIPELINE
 
 - The database and any mutable storage need to be backed up at least daily.
-
-- All relevant logs for all tiers need to be easily accessible (having them on the hosts is not an option).
 
 - The system should present relevant historical metrics to spot and debug bottlenecks.
 
@@ -290,12 +300,14 @@ As a solution, please commit to the Toptal git repo the following:
 
 The pipeline should be able to identify if the modifications for the project impact frontend or backend only and proceed to do the update to the specific autoscaling group.
 
-Add a testing stage for the infrastructure management itseft through *terramake*.
+Add a testing stage for the infrastructure management itself through *terratest*.
 
-Add redudancy to the database. Both subnets are already created. A master is created in the first subnet but the replica is missing in the second subnet. Also, an internal load balancer should be added as an endpoint for both databases (?).
+Add redundancy to the database. Both subnets are already created. A master is created in the first subnet but the replica is missing in the second subnet. Also, an internal load balancer should be added as an endpoint for both databases (?).
 
 Add proper DNS entries for both services.
 
 Renew the application instead of the server when a new release is merged in master.
 
 Create an artifact to be downloaded when a new Instance is created, instead of using the git clone approach.
+
+Create our own AMI to do less things when an instances is created. This will leave more readable terraform files.
