@@ -1,5 +1,21 @@
 # --- root/main.tf ---
 
+module "log" {
+  source              = "./log"
+#   vpc_cidr            = local.vpc_cidr
+#   access_ip           = var.access_ip
+#   security_groups     = local.security_groups
+#   sn_count            = 2
+#   max_subnets         = 20
+#   public_cidrs_front  = [for i in range(1, 255, 10) : cidrsubnet(local.vpc_cidr, 8, i)]
+#   public_cidrs_back   = [for i in range(2, 255, 10) : cidrsubnet(local.vpc_cidr, 8, i)]
+#   private_cidrs_front = [for i in range(3, 255, 10) : cidrsubnet(local.vpc_cidr, 8, i)]
+#   private_cidrs_back  = [for i in range(4, 255, 10) : cidrsubnet(local.vpc_cidr, 8, i)]
+#   private_cidrs_rds   = [for i in range(5, 255, 10) : cidrsubnet(local.vpc_cidr, 8, i)]
+#   db_subnet_group     = true
+}
+
+
 module "networking" {
   source              = "./networking"
   vpc_cidr            = local.vpc_cidr
@@ -60,6 +76,9 @@ module "compute" {
   private_sg_back      = module.networking.private_sg_back
   private_subnets_back = module.networking.private_subnets_back
 
+  min_size = var.min_size
+  max_size = var.max_size
+  desired_capacity = var.desired_capacity
   key_name                  = "tt-key"
   private_key_path          = var.private_key_path
   public_key_path           = join(".", [var.private_key_path, "pub"])

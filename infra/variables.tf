@@ -8,6 +8,20 @@ variable "create_bastion" {
   type = bool
 }
 
+variable "min_size" {
+  # default = 2
+  default = 1
+}
+
+variable "max_size" {
+  default = 4
+}
+
+variable "desired_capacity" {
+  # default = 1
+  default = 1
+}
+
 variable "access_ip" {
   type = string
 }
@@ -32,9 +46,5 @@ variable "private_key_path" {
 
 variable "gitlab_token" {
   type = string
+  sensitive = true
 }
-
-#variable "lb" {
-#    type = map(any)
-#    description = "groups of lb params"
-#}

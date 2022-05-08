@@ -3,11 +3,16 @@
 data "aws_ami" "server_ami" {
   most_recent = true
   owners      = ["099720109477"]
+  # owners      = ["137112412989"]
 
   filter {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
+  # filter {
+  #   name   = "name"
+  #   values = ["amzn2-ami-kernel-5.10-hvm-2.0.*"]
+  # }
 }
 
 resource "aws_key_pair" "tt_auth" {
@@ -71,11 +76,9 @@ EOF
 # Frontend autoscaling group
 resource "aws_autoscaling_group" "asg_front" {
   name = "tt-front"
-  min_size             = 2
-  # min_size = 1
-  max_size = 4
-  desired_capacity     = 2
-  # desired_capacity     = 1
+  min_size = var.min_size
+  max_size = var.max_size
+  desired_capacity     = var.desired_capacity
   launch_configuration = aws_launch_configuration.tt-lc-front.name
   vpc_zone_identifier = var.private_subnets_front
   target_group_arns   = var.lb_target_group_front_arn
@@ -140,11 +143,9 @@ EOF
 # Backend autosacaling group
 resource "aws_autoscaling_group" "asg_back" {
   name = "tt-back"
-  min_size             = 2
-  # min_size = 1
-  max_size = 4
-  desired_capacity     = 2
-  # desired_capacity     = 1
+  min_size = var.min_size
+  max_size = var.max_size
+  desired_capacity     = var.desired_capacity
   launch_configuration = aws_launch_configuration.tt-lc-back.name
   vpc_zone_identifier = var.private_subnets_back
   target_group_arns   = var.lb_target_group_back_arn
