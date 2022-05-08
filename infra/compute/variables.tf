@@ -6,6 +6,10 @@ variable "public_subnets_front" {}
 variable "public_sg_back" {}
 variable "private_sg_back" {}
 variable "private_subnets_back" {}
+variable "instance_profile" {}
+variable "min_size" {}
+variable "max_size" {}
+variable "desired_capacity" {}
 variable "key_name" {}
 variable "public_key_path" {}
 variable "private_key_path" {}
