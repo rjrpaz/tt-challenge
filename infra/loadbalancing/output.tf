@@ -7,3 +7,4 @@ output "lb_target_group_arn" {
 output "lb_endpoint" {
   value = aws_lb.tt_lb.*.dns_name
 }
+

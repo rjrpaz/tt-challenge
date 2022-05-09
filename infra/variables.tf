@@ -9,8 +9,8 @@ variable "create_bastion" {
 }
 
 variable "min_size" {
-  # default = 2
-  default = 1
+  default = 2
+  # default = 1
 }
 
 variable "max_size" {
@@ -18,8 +18,8 @@ variable "max_size" {
 }
 
 variable "desired_capacity" {
+  default = 2
   # default = 1
-  default = 1
 }
 
 variable "access_ip" {
@@ -47,4 +47,8 @@ variable "private_key_path" {
 variable "gitlab_token" {
   type      = string
   sensitive = true
+}
+
+variable "cdn_domain_name" {
+  default = "cdn.tt.com"
 }

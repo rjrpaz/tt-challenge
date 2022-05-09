@@ -276,7 +276,7 @@ I also modified the compute module to apply this new profile to the instances in
 
 It also worth to mention that this agent also provides resource monitoring level.
 
-## Added monitoring
+## Adding monitoring
 
 I created a module named *monitoring* that includes some metrics that may launch some alerts. This alerts can be checked in CloudWatch.
 
@@ -284,23 +284,105 @@ This alerts may also be used to scale up/down autoscaling group. These events ca
 
 Additional historic monitoring and metrics can be checked in the CloudWatch section from the AWS panel.
 
+## Adding cdn
+
+I created a module named cdn which enables cloudfront to the load balancers.
+
+The additional hostname is also addded to the output when applying terraform.
+
+```console
+
+   ...
+Outputs:
+
+backend_endpoint = "tt-loadbalancer-back-1485410496.us-east-1.elb.amazonaws.com"
+cdn_backend = "dgelqag951rck.cloudfront.net"
+cdn_frontend = "d1abd82ooao6jv.cloudfront.net"
+frontend_endpoint = "tt-loadbalancer-front-997903482.us-east-1.elb.amazonaws.com"
+rds_endpoint = "tt-db.cmjc5qdthd3j.us-east-1.rds.amazonaws.com:5432"
+
+```
+
+cdn_frontend and cdn_backend are the new values for the CDN resource:
+
+![CDN frontend](./img/cdn_frontend.png)
+
+![CDN backend](./img/cdn_backend.png)
+
+## Scaling up/down the instances group
+
+Being this infrastructure fully managed by terraform, there shouldn't be any modification outside the terraform configuration files, because this will leave the *terraform state file* outdated.
+
+However, if this is required and demands a faster resolution, this can be achieved like this:
+
+```bash
+$ terraform apply -var desired_capacity=2 -auto-approve
+
+module.networking.random_integer.random: Refreshing state... [id=65]
+module.compute.aws_key_pair.tt_auth: Refreshing state... [id=tt-key]
+module.log.aws_iam_policy.tt_cloudwatch_policy: Refreshing state... [id=arn:aws:iam::143822908773:policy/ec2_policy]
+module.networking.aws_eip.tt_allocation_id[0]: Refreshing state... [id=eipalloc-08d6b9a597bafb334]
+module.networking.aws_eip.tt_allocation_id[1]: Refreshing state... [id=eipalloc-071d0ebbd963b0fc8]
+module.networking.aws_vpc.tt_vpc: Refreshing state... [id=vpc-0bb20fd75ab595b83]
+  ...
+module.compute.aws_autoscaling_group.asg_back: Still modifying... [id=tt-back, 10s elapsed]
+module.compute.aws_autoscaling_group.asg_front: Still modifying... [id=tt-front, 10s elapsed]
+  ...
+```
+
+In this case we are raising the desired capacity for the autoscaling group to two instances.
+
+This will be properly stored in the state file from terraform, however any posterior execution of the terraform scripts with no additional arguments will restore the previous infrastructure.
+
+## Destroying the infrastructure
+
+CAUTION!!!! This is an extremely dangerous action to please be aware of its consequences. This command will destroy any resource currently managed by terraform.
+
+This command will list all the resources currently managed by terraform:
+
+```bash
+terraform state list
+```
+
+Those are the resources that are going to be destroyed, so double check if its ok to loose them.
+
+To proceed with the destruction of the infrastructure, run the following command.
+
+```bash
+terraform destroy
+```
+
+The command will ask one more time for a confirmation of the action.
+
+```console
+   ...
+Do you really want to destroy all resources?
+  Terraform will destroy all your managed infrastructure, as shown above.
+  There is no undo. Only 'yes' will be accepted to confirm.
+
+  Enter a value:
+```
+
+Type *yes* and wait. All resources should be gone a few minutes later.
+
+```console
+   ...
+module.networking.aws_security_group.tt_sg["private_front"]: Destruction complete after 3s
+module.networking.aws_vpc.tt_vpc: Destroying... [id=vpc-0bb20fd75ab595b83]
+module.networking.aws_vpc.tt_vpc: Destruction complete after 1s
+module.networking.random_integer.random: Destroying... [id=65]
+module.networking.random_integer.random: Destruction complete after 0s
+
+Destroy complete! Resources: 63 destroyed.
+```
+
 <!-- The requirements for the test project are:
 
 - ADD TESTS TO THE PIPELINE
 
 - The database and any mutable storage need to be backed up at least daily.
 
-- The system should implement CDN to allow content distribution based on client location
-
-As a solution, please commit to the Toptal git repo the following:
-
-- All the relevant configuration scripts (Terraform/Ansible/Cloud Formation/ARM Templates)
-
-- All the relevant runtime handling scripts (start/stop/scale nodes).
-
-- All the relevant backup scripts.
-
-- You can use another git provider to leverage hooks, CI/CD or other features not enabled in Toptal’s git. Everything else, including the code for the CI/CD pipeline, must be pushed to Toptal’s git. -->
+-->
 
 ## Improvements
 
@@ -310,6 +392,8 @@ Add a testing stage for the infrastructure management itself through *terratest*
 
 Add redundancy to the database. Both subnets are already created. A master is created in the first subnet but the replica is missing in the second subnet. Also, an internal load balancer should be added as an endpoint for both databases (?).
 
+AWS RDS architecture support Multi-AZ implementations. However this uses at least three availability zones and look a bit to much for a test.
+
 Add proper DNS entries for both services.
 
 Renew the application instead of the server when a new release is merged in master.
@@ -317,5 +401,3 @@ Renew the application instead of the server when a new release is merged in mast
 Create an artifact to be downloaded when a new Instance is created, instead of using the git clone approach.
 
 Create our own AMI to do less things when an instances is created. This will leave more readable terraform files.
-
-There were no specific requirements about autoscaling according to resource monitoring. This can be used in conjunction with a scaling policy.

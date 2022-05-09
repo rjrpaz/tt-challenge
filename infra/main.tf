@@ -2,17 +2,6 @@
 
 module "log" {
   source = "./log"
-  #   vpc_cidr            = local.vpc_cidr
-  #   access_ip           = var.access_ip
-  #   security_groups     = local.security_groups
-  #   sn_count            = 2
-  #   max_subnets         = 20
-  #   public_cidrs_front  = [for i in range(1, 255, 10) : cidrsubnet(local.vpc_cidr, 8, i)]
-  #   public_cidrs_back   = [for i in range(2, 255, 10) : cidrsubnet(local.vpc_cidr, 8, i)]
-  #   private_cidrs_front = [for i in range(3, 255, 10) : cidrsubnet(local.vpc_cidr, 8, i)]
-  #   private_cidrs_back  = [for i in range(4, 255, 10) : cidrsubnet(local.vpc_cidr, 8, i)]
-  #   private_cidrs_rds   = [for i in range(5, 255, 10) : cidrsubnet(local.vpc_cidr, 8, i)]
-  #   db_subnet_group     = true
 }
 
 
@@ -101,4 +90,17 @@ module "monitoring" {
   count                  = 2
   source                 = "./monitoring"
   autoscaling_group_name = module.compute.autoscaling_group_name[count.index]
+}
+
+module "cdn_frontend" {
+  source                 = "./cdn"
+  load_balancer_name =  module.loadbalancing["front"].lb_endpoint[0]
+  load_balancer_domain = join(".", ["frontend", var.cdn_domain_name])
+
+}
+
+module "cdn_backend" {
+  source                 = "./cdn"
+  load_balancer_name =  module.loadbalancing["back"].lb_endpoint[0]
+  load_balancer_domain = join(".", ["backend", var.cdn_domain_name])
 }
