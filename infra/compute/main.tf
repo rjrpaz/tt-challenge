@@ -17,11 +17,12 @@ resource "aws_key_pair" "tt_auth" {
 
 # Frontend configuration template
 resource "aws_launch_configuration" "tt_lc_front" {
-  name_prefix   = "tt-lc-asg-front-"
-  image_id      = data.aws_ami.server_ami.id
-  instance_type = var.instance_type
+  name_prefix          = "tt-lc-asg-front-"
+  image_id             = data.aws_ami.server_ami.id
+  instance_type        = var.instance_type
   iam_instance_profile = var.instance_profile
-  key_name      = aws_key_pair.tt_auth.id
+  enable_monitoring    = true
+  key_name             = aws_key_pair.tt_auth.id
   # user_data     = file("install_frontend.sh")
   user_data = <<EOF
 #!/bin/bash
@@ -224,20 +225,20 @@ EOF
 
 data "aws_default_tags" "asg_front" {
   tags = {
-      Name = "tt-front"
-    }
+    Name = "tt-front"
+  }
 }
 
 # Frontend autoscaling group
 resource "aws_autoscaling_group" "asg_front" {
-  name = "tt-front"
-  min_size = var.min_size
-  max_size = var.max_size
+  name                 = "tt-front"
+  min_size             = var.min_size
+  max_size             = var.max_size
   desired_capacity     = var.desired_capacity
   launch_configuration = aws_launch_configuration.tt_lc_front.name
-  vpc_zone_identifier = var.private_subnets_front
-  target_group_arns   = var.lb_target_group_front_arn
-    dynamic "tag" {
+  vpc_zone_identifier  = var.private_subnets_front
+  target_group_arns    = var.lb_target_group_front_arn
+  dynamic "tag" {
     for_each = data.aws_default_tags.asg_front.tags
     content {
       key                 = tag.key
@@ -249,13 +250,14 @@ resource "aws_autoscaling_group" "asg_front" {
 
 # Backend configuration template
 resource "aws_launch_configuration" "tt_lc_back" {
-  name_prefix   = "tt-lc-asg-back-"
-  image_id      = data.aws_ami.server_ami.id
-  instance_type = var.instance_type
+  name_prefix          = "tt-lc-asg-back-"
+  image_id             = data.aws_ami.server_ami.id
+  instance_type        = var.instance_type
   iam_instance_profile = var.instance_profile
-  key_name      = aws_key_pair.tt_auth.id
+  enable_monitoring    = true
+  key_name             = aws_key_pair.tt_auth.id
   # user_data     = file("install_backend.sh")
-  user_data = <<EOF
+  user_data       = <<EOF
 #!/bin/bash
 
 # Install npm
@@ -460,20 +462,20 @@ EOF
 
 data "aws_default_tags" "asg_back" {
   tags = {
-      Name = "tt-back"
-    }
+    Name = "tt-back"
+  }
 }
 
 # Backend autoscaling group
 resource "aws_autoscaling_group" "asg_back" {
-  name = "tt-back"
-  min_size = var.min_size
-  max_size = var.max_size
+  name                 = "tt-back"
+  min_size             = var.min_size
+  max_size             = var.max_size
   desired_capacity     = var.desired_capacity
   launch_configuration = aws_launch_configuration.tt_lc_back.name
-  vpc_zone_identifier = var.private_subnets_back
-  target_group_arns   = var.lb_target_group_back_arn
-    dynamic "tag" {
+  vpc_zone_identifier  = var.private_subnets_back
+  target_group_arns    = var.lb_target_group_back_arn
+  dynamic "tag" {
     for_each = data.aws_default_tags.asg_back.tags
     content {
       key                 = tag.key
@@ -485,9 +487,9 @@ resource "aws_autoscaling_group" "asg_back" {
 
 # Bastion host - for debug purposes only
 resource "aws_instance" "bastion" {
-  count         = var.create_bastion ? 1 : 0
-  instance_type = var.instance_type
-  ami           = data.aws_ami.server_ami.id
+  count                = var.create_bastion ? 1 : 0
+  instance_type        = var.instance_type
+  ami                  = data.aws_ami.server_ami.id
   iam_instance_profile = var.instance_profile
   tags = {
     Name = "tt-bastion"

@@ -276,13 +276,19 @@ I also modified the compute module to apply this new profile to the instances in
 
 It also worth to mention that this agent also provides resource monitoring level.
 
+## Added monitoring
+
+I created a module named *monitoring* that includes some metrics that may launch some alerts. This alerts can be checked in CloudWatch.
+
+This alerts may also be used to scale up/down autoscaling group. These events can be analyzed later to detect bottlenecks.
+
+Additional historic monitoring and metrics can be checked in the CloudWatch section from the AWS panel.
+
 <!-- The requirements for the test project are:
 
 - ADD TESTS TO THE PIPELINE
 
 - The database and any mutable storage need to be backed up at least daily.
-
-- The system should present relevant historical metrics to spot and debug bottlenecks.
 
 - The system should implement CDN to allow content distribution based on client location
 
@@ -311,3 +317,5 @@ Renew the application instead of the server when a new release is merged in mast
 Create an artifact to be downloaded when a new Instance is created, instead of using the git clone approach.
 
 Create our own AMI to do less things when an instances is created. This will leave more readable terraform files.
+
+There were no specific requirements about autoscaling according to resource monitoring. This can be used in conjunction with a scaling policy.
