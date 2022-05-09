@@ -309,6 +309,12 @@ cdn_frontend and cdn_backend are the new values for the CDN resource:
 
 ![CDN backend](./img/cdn_backend.png)
 
+## Adding read-only replica to the database
+
+For this I added a new *aws_db_instance* resource with additional parametter *replicate_source_db* pointing to the original database.
+
+![DB replica](./img/db-replica.png)
+
 ## Scaling up/down the instances group
 
 Being this infrastructure fully managed by terraform, there shouldn't be any modification outside the terraform configuration files, because this will leave the *terraform state file* outdated.
