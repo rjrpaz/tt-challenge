@@ -6,45 +6,45 @@ resource "aws_iam_policy" "tt_cloudwatch_policy" {
   path        = "/"
   description = "Policy to provide permission to EC2"
   policy = jsonencode({
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents",
-        "logs:DescribeLogStreams"
-    ],
-      "Resource": [
-        "arn:aws:logs:*:*:*"
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams"
+        ],
+        "Resource" : [
+          "arn:aws:logs:*:*:*"
+        ]
+      }
     ]
-  }
- ]
-})
+  })
 }
 
 # Create a role
 resource "aws_iam_role" "tt_cloudwatch_agent_role" {
-  name = "tt-cloudwatch-agent-role"
-  description =  "Allows EC2 instances to use CloudWatch logs"
+  name        = "tt-cloudwatch-agent-role"
+  description = "Allows EC2 instances to use CloudWatch logs"
 
   assume_role_policy = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "sts:AssumeRole"
-            ],
-            "Principal": {
-                "Service": [
-                    "ec2.amazonaws.com"
-                ]
-            }
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "sts:AssumeRole"
+        ],
+        "Principal" : {
+          "Service" : [
+            "ec2.amazonaws.com"
+          ]
         }
+      }
     ]
-})
+  })
 }
 
 # Attach role to policy

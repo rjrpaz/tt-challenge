@@ -45,6 +45,6 @@ variable "private_key_path" {
 }
 
 variable "gitlab_token" {
-  type = string
+  type      = string
   sensitive = true
 }
