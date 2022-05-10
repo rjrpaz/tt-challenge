@@ -4,7 +4,7 @@ resource "aws_cloudfront_distribution" "tt_distribution" {
   origin {
     domain_name = var.load_balancer_name
     origin_id   = var.load_balancer_domain
-    
+
     custom_origin_config {
       http_port              = "80"
       https_port             = "443"
@@ -13,13 +13,13 @@ resource "aws_cloudfront_distribution" "tt_distribution" {
     }
   }
 
-  enabled             = true
-  is_ipv6_enabled     = true
+  enabled         = true
+  is_ipv6_enabled = true
 
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id   = var.load_balancer_domain
+    target_origin_id = var.load_balancer_domain
 
     forwarded_values {
       query_string = true
@@ -34,7 +34,7 @@ resource "aws_cloudfront_distribution" "tt_distribution" {
     default_ttl            = 86400
     max_ttl                = 31536000
   }
- 
+
   price_class = "PriceClass_All"
 
   restrictions {

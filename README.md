@@ -315,6 +315,94 @@ For this I added a new *aws_db_instance* resource with additional parametter *re
 
 ![DB replica](./img/db-replica.png)
 
+The replica can be included or excluded according to the value of the variable *create_replica* in file terraform.tfvars.
+
+## Backing up the database
+
+Additional resources where added to the database module to run a daily backup. These resources include:
+
+- Python-based lambda function that take a snapshot of the database
+- Lambda layer to store additional python libraries required for the script.
+- Cloud watch events that runs the script on a daily basis at 0:20 HS GMT.
+
+When the script starts running, we will see the database in a non-available state:
+
+![Backing up DB](./img/backing-up-rds.png)
+
+When it done, logs can be checked in the CloudWatch panel:
+
+![Backing up DB logs](./img/backing-up-rds-logs.png)
+
+### Backup script
+
+The lambda script that takes the snapshot of the RDS can be checked [here](https://git.toptal.com/fernando.cunha/rjrpaz/-/blob/main/backup_rds/backup_rds.py).
+
+This script uses datetime library and this should be provided separately to be included in the lambda layer.
+
+Please, be aware that there is no need to re-create this file for this particular project, because is already included as part of it. This steps are noted here for documentation purposes only.
+
+The steps to include additional libraries are:
+
+1. Create an empty directory:
+
+  ```bash
+  mkdir packages
+  cd packages
+  ```
+
+1. Create a virtual environment
+
+  ```bash
+  python3 -m venv venv
+  ```
+
+1. Use this virtual environment
+
+  ```bash
+  source venv/bin/activate
+  ```
+
+  (console prompt should change)
+
+1. Create an new empty directory called *python*:
+
+  ```bash
+  mkdir python
+  cd python
+  ```
+
+1. Install required libraries in this directory:
+
+  ```bash
+  pip install datetime -t .
+  ```
+
+1. Remove some non-useful files to leave the layer as small as possible:
+
+  ```bash
+  rm -rf *dist-info
+  ```
+
+1. Change to parent directory
+
+  ```bash
+  cd ..
+  ```
+
+1. Create compressed file including the content of the directoy that includes the libraries:
+
+  ```bash
+  zip -r lambda-python-libs.zip python
+  ```
+
+1. Now you can leave the virtual environment:
+
+  ```bash
+  deactive
+  ```
+
+This new file lambda-python-libs.zip will be used by terraform script to add as content for the lambda layer.
+
 ## Scaling up/down the instances group
 
 Being this infrastructure fully managed by terraform, there shouldn't be any modification outside the terraform configuration files, because this will leave the *terraform state file* outdated.
@@ -382,14 +470,6 @@ module.networking.random_integer.random: Destruction complete after 0s
 Destroy complete! Resources: 63 destroyed.
 ```
 
-<!-- The requirements for the test project are:
-
-- ADD TESTS TO THE PIPELINE
-
-- The database and any mutable storage need to be backed up at least daily.
-
--->
-
 ## Improvements
 
 The pipeline should be able to identify if the modifications for the project impact frontend or backend only and proceed to do the update to the specific autoscaling group.
@@ -407,3 +487,5 @@ Renew the application instead of the server when a new release is merged in mast
 Create an artifact to be downloaded when a new Instance is created, instead of using the git clone approach.
 
 Create our own AMI to do less things when an instances is created. This will leave more readable terraform files.
+
+Register load balancer endpoints and CDN endpoints to Route53.
