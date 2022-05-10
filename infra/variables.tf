@@ -8,6 +8,10 @@ variable "create_bastion" {
   type = bool
 }
 
+variable "create_replica" {
+  type = bool
+}
+
 variable "min_size" {
   default = 2
   # default = 1

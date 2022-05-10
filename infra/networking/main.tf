@@ -150,8 +150,8 @@ resource "aws_route_table" "tt_private_rt_front" {
   count  = var.sn_count
 
   route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.tt_nat_gateway.*.id[count.index]
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.tt_nat_gateway.*.id[count.index]
   }
 
   tags = {
@@ -186,8 +186,8 @@ resource "aws_route_table" "tt_private_rt_back" {
   count  = var.sn_count
 
   route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.tt_nat_gateway.*.id[count.index]
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.tt_nat_gateway.*.id[count.index]
   }
 
   tags = {

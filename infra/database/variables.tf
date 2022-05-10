@@ -10,3 +10,4 @@ variable "db_subnet_group_name" {}
 variable "db_engine_version" {}
 variable "db_identifier" {}
 variable "skip_db_snapshot" {}
+variable "create_replica" {}

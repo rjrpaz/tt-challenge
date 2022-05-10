@@ -32,6 +32,7 @@ module "database" {
   skip_db_snapshot       = true
   db_subnet_group_name   = module.networking.db_subnet_group_name
   vpc_security_group_ids = module.networking.db_security_group
+  create_replica         = var.create_replica
 }
 
 # Create ALBs
@@ -93,14 +94,14 @@ module "monitoring" {
 }
 
 module "cdn_frontend" {
-  source                 = "./cdn"
-  load_balancer_name =  module.loadbalancing["front"].lb_endpoint[0]
+  source               = "./cdn"
+  load_balancer_name   = module.loadbalancing["front"].lb_endpoint[0]
   load_balancer_domain = join(".", ["frontend", var.cdn_domain_name])
 
 }
 
 module "cdn_backend" {
-  source                 = "./cdn"
-  load_balancer_name =  module.loadbalancing["back"].lb_endpoint[0]
+  source               = "./cdn"
+  load_balancer_name   = module.loadbalancing["back"].lb_endpoint[0]
   load_balancer_domain = join(".", ["backend", var.cdn_domain_name])
 }
