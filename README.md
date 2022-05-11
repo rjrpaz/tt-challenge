@@ -242,11 +242,9 @@ The file that defined the pipeline is part of the project: [https://git.toptal.c
 
 I defined three main stages for the pipeline:
 
-- build: it will build the application
-- test: it will run tests (if any - TBD)
-- deploy: it will deploy the services
-
-The last stage is only applied on the master branch.
+- build: it will build the application. Last action in this stage should be upload the artifact included a fully running version of the app.
+- test: it will run some tests. Fist action in this stage should be recover the artifact created in previous step. I included some general scanning vulnerabilities using [retire.js](https://retirejs.github.io/retire.js/) instead of creating specific test code for the application.
+- deploy: it will deploy the services. This last stage is only applied on the *master* branch.
 
 Regarding the fact that the infrastructure where this application is running install the application from scratch (downloading the code from the gitlab repository), then the new deployment can be achieved just by renewing the autoscaling group with new fresh instances. The deploy stage run a command to do this renewal then.
 
